@@ -8,10 +8,15 @@ using Microsoft.Extensions.DependencyInjection;
 namespace eCommerce.DataAccessLayer;
 public static class DependencyInjection
 {
-    public static IServiceCollection AddDataAccessLayer(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddDataAccessLayer(this IServiceCollection services,
+        IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("Default")
-            ?? throw new KeyNotFoundException("Mysql connection string is missing!");
+        var connectionString = configuration.GetConnectionString("Default")!
+            .Replace("$MYSQL_HOST", Environment.GetEnvironmentVariable("MYSQL_HOST"))
+            .Replace("$MYSQL_PASS", Environment.GetEnvironmentVariable("MYSQL_PASS"))
+            .Replace("$MYSQL_DB",   Environment.GetEnvironmentVariable("MYSQL_DB"))
+            .Replace("$MYSQL_USER", Environment.GetEnvironmentVariable("MYSQL_USER"))
+            .Replace("$MYSQL_PORT", Environment.GetEnvironmentVariable("MYSQL_PORT"));
 
         services.AddDbContext<ApplicationDbContext>(options => options.UseMySQL(connectionString));
         services.AddScoped<IProductsRepository, ProductRepository>();

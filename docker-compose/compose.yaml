@@ -1,0 +1,32 @@
+services:
+  mysql-service:
+    image: mysql:latest
+    ports:
+      - "3301:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=former_age7
+    networks:
+      - product-network
+    volumes:
+      - ./mysql-init:/docker-entrypoint-initdb.d
+    hostname: mysql-host
+
+  product-service:
+    image: amirtymri/products-service:v1.0
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    environment:
+      - MYSQL_HOST=mysql-host
+      - MYSQL_PASS=former_age7
+      - MYSQL_HOST=localhost
+      - MYSQL_PORT=3306
+      - MYSQL_PASS=former_age7
+      - MYSQL_USER=root
+      - MYSQL_DB=ecommerceproductsdatabase
+    networks:
+      - product-network
+
+networks:
+  product-network:
+    driver: bridge
