@@ -5,6 +5,7 @@ using eCommerce.BusinessLogicLayer.ServiceContracts;
 using eCommerce.DataAccessLayer.Entitie;
 using eCommerce.DataAccessLayer.RepositoryContracts;
 using FluentValidation;
+using System.Diagnostics.Eventing.Reader;
 using System.Linq.Expressions;
 
 namespace eCommerce.BusinessLogicLayer.Services;
@@ -102,6 +103,24 @@ internal class ProductsService : IProductsService
             .UpdateProduct(_mapper.Map<Product>(request));
 
         return _mapper.Map<ProductRersponse>(response);
+    }
+
+    public async Task<ProductValidationResult> ValidateProducts(List<Guid> productIds)
+    {
+        if (productIds is null || productIds.Count == 0)
+            throw new ArgumentException(nameof(productIds));
+
+        var res = new ProductValidationResult();
+
+        foreach (var id in productIds.Distinct())
+        {
+            if (!await _productRepository.DoesProductExist(id))
+            {
+                res.InvalidIDs.Add(id);
+            }
+        }
+        
+        return res;
     }
 }
 

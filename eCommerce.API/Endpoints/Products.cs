@@ -1,6 +1,7 @@
 ﻿using eCommerce.BusinessLogicLayer.DTOs;
 using eCommerce.BusinessLogicLayer.ServiceContracts;
 using FluentValidation;
+using Microsoft.AspNetCore.Mvc;
 namespace eCommerce.API.Endpoints;
 
 public static class Products
@@ -14,6 +15,12 @@ public static class Products
         // GET: /api/products/search/{product-id}
         app.MapGet("/api/products/search/product-id/{productID:guid}", async (IProductsService service, Guid productId) =>
             Results.Ok(await service.GetProductByCondition(p => p.productID == productId)));
+
+        app.MapPost("/api/products/validate", async (IProductsService service, [FromBody]List<Guid> productIds) =>
+        {
+            var res = await service.ValidateProducts(productIds);
+            return res.IsSuccess ? Results.Ok(res) : Results.BadRequest(res);
+        });
 
         // GET: /api/products/search/{keyword}
         app.MapGet("/api/products/search/{keyword:alpha}", async (IProductsService service, string keyword) =>
