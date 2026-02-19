@@ -1,10 +1,13 @@
-﻿using AutoMapper;
+﻿
+using AutoMapper;
 using AutoMapper.Extensions.ExpressionMapping;
 using eCommerce.BusinessLogicLayer.DTOs;
+using eCommerce.BusinessLogicLayer.MessageBroker.Abstractions;
 using eCommerce.BusinessLogicLayer.ServiceContracts;
 using eCommerce.DataAccessLayer.Entitie;
 using eCommerce.DataAccessLayer.RepositoryContracts;
 using FluentValidation;
+using Microsoft.Extensions.Configuration;
 using System.Diagnostics.Eventing.Reader;
 using System.Linq.Expressions;
 
@@ -25,11 +28,14 @@ internal class ProductsService : IProductsService
     private readonly IValidator<ProductUpdateRequest> _updateRequestValidator;
     private readonly IProductsRepository _productRepository;
     private readonly IMapper _mapper;
-    public ProductsService(IProductsRepository productRepository, IMapper mapper, 
-        IValidator<ProductUpdateRequest> updateRequestValidator, IValidator<ProductAddRequest> addRequestValidator)
+    private readonly IPublisher _publisher;
+    public ProductsService(IProductsRepository productRepository, IMapper mapper, IPublisher publisher,
+        IValidator<ProductUpdateRequest> updateRequestValidator, IValidator<ProductAddRequest> addRequestValidator,
+        IConfiguration cfg)
     {
         _productRepository = productRepository;
         _mapper = mapper;
+        _publisher = publisher;
         _updateRequestValidator = updateRequestValidator;
         _addRequestValidator = addRequestValidator;
     }
@@ -102,7 +108,13 @@ internal class ProductsService : IProductsService
         var response = await _productRepository
             .UpdateProduct(_mapper.Map<Product>(request));
 
-        return _mapper.Map<ProductRersponse>(response);
+        var mappedRes = _mapper.Map<ProductRersponse>(response);
+
+        // sending updated product to message queue
+        _publisher.Publish(routeKey: "product.update",
+            mappedRes);
+
+        return mappedRes;
     }
 
     public async Task<ProductValidationResult> ValidateProducts(List<Guid> productIds)
@@ -114,13 +126,28 @@ internal class ProductsService : IProductsService
 
         foreach (var id in productIds.Distinct())
         {
-            if (!await _productRepository.DoesProductExist(id))
-            {
+            var product = await _productRepository
+                .GetProductByCondition(p => p.ProductID == id);
+            
+            if (product is null)
                 res.InvalidIDs.Add(id);
-            }
+            else
+                res.Products.Add(_mapper.Map<ProductSummery>(product));
         }
         
         return res;
+    }
+    
+    public async Task<ProductSummery> ValidateProduct(Guid productId)
+    {
+        var product = await _productRepository
+            .GetProductByCondition(p => p.ProductID == productId);
+
+        if (product is null)
+            return null;
+        else
+            return _mapper.Map<ProductSummery>(product);
+
     }
 }
 

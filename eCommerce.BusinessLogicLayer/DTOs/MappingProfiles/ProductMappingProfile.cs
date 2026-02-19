@@ -28,6 +28,12 @@ public class ProductMappingProfile : Profile
             .ForMember(dst => dst.quantityInStock, opt => opt.MapFrom(src => src.QuantityInStock))
             .ForMember(dst => dst.category, opt => opt.MapFrom(src => src.Category));
 
+        CreateMap<Product, ProductSummery>()
+            .ForMember(dst => dst.ProductId, opt => opt.MapFrom(src => src.ProductID))
+            .ForMember(dst => dst.ProductName, opt => opt.MapFrom(src => src.ProductName))
+            .ForMember(dst => dst.Category, opt => opt.MapFrom(src => src.Category))
+            .ForMember(dst => dst.UnitPrice, opt => opt.MapFrom(src => src.UnitPrice));
+
         CreateMap<ProductRersponse, Product>()
             .ForMember(dst => dst.ProductID, opt => opt.MapFrom(src => src.productID))
             .ForMember(dst => dst.ProductName, opt => opt.MapFrom(src => src.productName))

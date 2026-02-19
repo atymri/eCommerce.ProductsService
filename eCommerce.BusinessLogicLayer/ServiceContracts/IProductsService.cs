@@ -12,4 +12,5 @@ public interface IProductsService
     Task<ProductRersponse?> UpdateProduct(ProductUpdateRequest request);
     Task<bool> DeleteProduct(Guid productId);
     Task<ProductValidationResult> ValidateProducts(List<Guid> productIds);
+    Task<ProductSummery> ValidateProduct(Guid productId);
 }

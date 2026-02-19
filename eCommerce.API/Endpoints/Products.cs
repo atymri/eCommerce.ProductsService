@@ -1,5 +1,6 @@
 ﻿using eCommerce.BusinessLogicLayer.DTOs;
 using eCommerce.BusinessLogicLayer.ServiceContracts;
+using eCommerce.DataAccessLayer.Entitie;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 namespace eCommerce.API.Endpoints;
@@ -16,10 +17,22 @@ public static class Products
         app.MapGet("/api/products/search/product-id/{productID:guid}", async (IProductsService service, Guid productId) =>
             Results.Ok(await service.GetProductByCondition(p => p.productID == productId)));
 
-        app.MapPost("/api/products/validate", async (IProductsService service, [FromBody]List<Guid> productIds) =>
+        app.MapPost("/api/products/validate", async (IProductsService service, [FromBody] List<Guid> productIds) =>
         {
             var res = await service.ValidateProducts(productIds);
             return res.IsSuccess ? Results.Ok(res) : Results.BadRequest(res);
+        });
+
+        app.MapGet("/api/products/validate/{productId:guid}", async (IProductsService service, Guid productId) =>
+        {
+            if (productId == null || productId == Guid.Empty)
+                return Results.BadRequest();
+
+            var result = await service.ValidateProduct(productId);
+            if (result is null)
+                return Results.NotFound();
+
+            return Results.Ok(result);
         });
 
         // GET: /api/products/search/{keyword}
@@ -51,11 +64,11 @@ public static class Products
         });
 
         // POST: /api/products
-        app.MapPost("/api/products", async (IProductsService service, 
+        app.MapPost("/api/products", async (IProductsService service,
             IValidator<ProductAddRequest> validator, ProductAddRequest req) =>
         {
             var validationRes = await validator.ValidateAsync(req);
-            if(!validationRes.IsValid)
+            if (!validationRes.IsValid)
             {
                 Dictionary<string, string[]> errors = validationRes.Errors.GroupBy(res => res.PropertyName)
                 .ToDictionary(
@@ -73,11 +86,11 @@ public static class Products
         });
 
         // PUT: /api/products
-        app.MapPut("/api/products", async (IProductsService service, 
+        app.MapPut("/api/products", async (IProductsService service,
             IValidator<ProductUpdateRequest> validator, ProductUpdateRequest req) =>
         {
             var validationRes = await validator.ValidateAsync(req);
-            if(!validationRes.IsValid)
+            if (!validationRes.IsValid)
             {
                 Dictionary<string, string[]> errors = validationRes.Errors.GroupBy(res => res.PropertyName)
                 .ToDictionary(

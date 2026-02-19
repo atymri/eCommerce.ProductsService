@@ -1,9 +1,11 @@
 ﻿using eCommerce.BusinessLogicLayer.DTOs.MappingProfiles;
+using eCommerce.BusinessLogicLayer.MessageBroker;
+using eCommerce.BusinessLogicLayer.MessageBroker.Abstractions;
 using eCommerce.BusinessLogicLayer.ServiceContracts;
 using eCommerce.BusinessLogicLayer.Services;
 using eCommerce.BusinessLogicLayer.Validators;
 using FluentValidation;
-using FluentValidation.AspNetCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace eCommerce.BusinessLogicLayer;
@@ -17,6 +19,9 @@ public static class DependencyInjection
 
         services.AddAutoMapper(typeof(ProductMappingProfile).Assembly);
         services.AddScoped<IProductsService, ProductsService>();
+
+        services.AddSingleton<IConnector, Connector>();
+        services.AddTransient<IPublisher, Publisher>();
 
         return services;
     }
